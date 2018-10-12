@@ -129,7 +129,190 @@ $(document).ready(function () {
 </div>
 
 
+<p>Load some packages.</p>
+<pre class="r"><code>library(rvest)</code></pre>
+<pre><code>## Loading required package: xml2</code></pre>
+<pre><code>## 
+## Attaching package: 'rvest'</code></pre>
+<pre><code>## The following object is masked from 'package:purrr':
+## 
+##     pluck</code></pre>
+<pre><code>## The following object is masked from 'package:readr':
+## 
+##     guess_encoding</code></pre>
+<pre class="r"><code>library(httr)</code></pre>
+<div id="scrape-a-table" class="section level3">
+<h3>Scrape a table</h3>
+<p>First get the HTML</p>
+<pre class="r"><code>url = &quot;http://samhda.s3-us-gov-west-1.amazonaws.com/s3fs-public/field-uploads/2k15StateFiles/NSDUHsaeShortTermCHG2015.htm&quot;
 
+drug_use_xml = read_html(url)
+#got html code from the internet and loaded into r
+drug_use_xml</code></pre>
+<pre><code>## {xml_document}
+## &lt;html lang=&quot;en&quot;&gt;
+## [1] &lt;head&gt;\n&lt;link rel=&quot;P3Pv1&quot; href=&quot;http://www.samhsa.gov/w3c/p3p.xml&quot;&gt;\ ...
+## [2] &lt;body&gt;\r\n\r\n&lt;noscript&gt;\r\n&lt;p&gt;Your browser's Javascript is off. Hyp ...</code></pre>
+<p>Get the tables from the HTML</p>
+<p>html_nodes(css = “table”)—pull out all of the html objects that labeled “table”</p>
+<pre class="r"><code>drug_use_xml %&gt;%
+  html_nodes(css = &quot;table&quot;) %&gt;% 
+  class</code></pre>
+<pre><code>## [1] &quot;xml_nodeset&quot;</code></pre>
+<p>.[[1]]—give me the first object of the list–.[[2]] get the second table slice(-1)—take out the first row of the df—filter is better!</p>
+<pre class="r"><code>drug_use_xml %&gt;%
+  html_nodes(css = &quot;table&quot;) %&gt;% 
+  .[[1]] %&gt;% 
+  html_table() %&gt;% 
+  slice(-1) %&gt;% 
+  as_tibble()</code></pre>
+<pre><code>## # A tibble: 56 x 16
+##    State `12+(2013-2014)` `12+(2014-2015)` `12+(P Value)` `12-17(2013-201…
+##    &lt;chr&gt; &lt;chr&gt;            &lt;chr&gt;            &lt;chr&gt;          &lt;chr&gt;           
+##  1 Tota… 12.90a           13.36            0.002          13.28b          
+##  2 Nort… 13.88a           14.66            0.005          13.98           
+##  3 Midw… 12.40b           12.76            0.082          12.45           
+##  4 South 11.24a           11.64            0.029          12.02           
+##  5 West  15.27            15.62            0.262          15.53a          
+##  6 Alab… 9.98             9.60             0.426          9.90            
+##  7 Alas… 19.60a           21.92            0.010          17.30           
+##  8 Ariz… 13.69            13.12            0.364          15.12           
+##  9 Arka… 11.37            11.59            0.678          12.79           
+## 10 Cali… 14.49            15.25            0.103          15.03           
+## # ... with 46 more rows, and 11 more variables: `12-17(2014-2015)` &lt;chr&gt;,
+## #   `12-17(P Value)` &lt;chr&gt;, `18-25(2013-2014)` &lt;chr&gt;,
+## #   `18-25(2014-2015)` &lt;chr&gt;, `18-25(P Value)` &lt;chr&gt;,
+## #   `26+(2013-2014)` &lt;chr&gt;, `26+(2014-2015)` &lt;chr&gt;, `26+(P Value)` &lt;chr&gt;,
+## #   `18+(2013-2014)` &lt;chr&gt;, `18+(2014-2015)` &lt;chr&gt;, `18+(P Value)` &lt;chr&gt;</code></pre>
+<pre class="r"><code>table_marj = (drug_use_xml %&gt;% html_nodes(css = &quot;table&quot;))[[1]] %&gt;%
+  html_table() %&gt;%
+  .[-1,] %&gt;% 
+  as_tibble()</code></pre>
+<p>This dataframe is very untidy!</p>
+</div>
+<div id="cost-of-living" class="section level3">
+<h3>Cost of living</h3>
+<pre class="r"><code>nyc_cost = read_html(&quot;https://www.bestplaces.net/cost_of_living/city/new_york/new_york&quot;) %&gt;%
+  html_nodes(css = &quot;table&quot;) %&gt;%
+  .[[1]] %&gt;%
+  html_table(header = TRUE)</code></pre>
+</div>
+<div id="harry-potter" class="section level3">
+<h3>Harry Potter</h3>
+<p>Let’s get some Potter data!</p>
+<pre class="r"><code>hpsaga_html = read_html(&quot;https://www.imdb.com/list/ls000630791/&quot;)</code></pre>
+<pre class="r"><code>title_vec = hpsaga_html %&gt;%
+  html_nodes(css = &quot;.lister-item-header a&quot;) %&gt;%
+  html_text()
+
+gross_rev_vec = hpsaga_html %&gt;%
+  html_nodes(&quot;.text-muted .ghost~ .text-muted+ span&quot;) %&gt;%
+  html_text()
+
+runtime_vec = hpsaga_html %&gt;%
+  html_nodes(&quot;.runtime&quot;) %&gt;%
+  html_text()
+
+hpsaga_df = tibble(
+  title = title_vec,
+  rev = gross_rev_vec,
+  runtime = runtime_vec
+)</code></pre>
+</div>
+<div id="napoleon-dynamite" class="section level3">
+<h3>Napoleon Dynamite</h3>
+<pre class="r"><code>url = &quot;https://www.amazon.com/product-reviews/B00005JNBQ/ref=cm_cr_arp_d_viewopt_rvwer?ie=UTF8&amp;reviewerType=avp_only_reviews&amp;sortBy=recent&amp;pageNumber=1&quot;
+
+dynamite_html = read_html(url)
+
+review_titles = dynamite_html %&gt;%
+  html_nodes(&quot;#cm_cr-review_list .review-title&quot;) %&gt;%
+  html_text()
+
+review_stars = dynamite_html %&gt;%
+  html_nodes(&quot;#cm_cr-review_list .review-rating&quot;) %&gt;%
+  html_text()
+
+review_text = dynamite_html %&gt;%
+    html_nodes(&quot;.review-data:nth-child(4)&quot;) %&gt;%
+    html_text()
+
+reviews = tibble(
+  title = review_titles,
+  stars = review_stars,
+  text = review_text
+)</code></pre>
+</div>
+<div id="apis" class="section level2">
+<h2>APIs</h2>
+<p>Get the water data</p>
+<pre class="r"><code>nyc_water = GET(&quot;https://data.cityofnewyork.us/resource/waf7-5gvc.csv&quot;) %&gt;% 
+  content(&quot;parsed&quot;)</code></pre>
+<pre><code>## Parsed with column specification:
+## cols(
+##   new_york_city_population = col_double(),
+##   nyc_consumption_million_gallons_per_day = col_double(),
+##   per_capita_gallons_per_person_per_day = col_integer(),
+##   year = col_integer()
+## )</code></pre>
+<p>As JSON</p>
+<pre class="r"><code>nyc_water = GET(&quot;https://data.cityofnewyork.us/resource/waf7-5gvc.json&quot;) %&gt;% 
+  content(&quot;text&quot;) %&gt;% 
+  jsonlite::fromJSON() %&gt;% 
+  as_tibble()</code></pre>
+<p>BRFSS – not run because it takes too long.</p>
+<pre class="r"><code>brfss_smart2010 = 
+  GET(&quot;https://data.cdc.gov/api/views/acme-vg9e/rows.csv?accessType=DOWNLOAD&quot;) %&gt;% 
+  content(&quot;parsed&quot;)</code></pre>
+<pre><code>## Parsed with column specification:
+## cols(
+##   .default = col_character(),
+##   Year = col_integer(),
+##   Sample_Size = col_integer(),
+##   Data_value = col_double(),
+##   Confidence_limit_Low = col_double(),
+##   Confidence_limit_High = col_double(),
+##   Display_order = col_integer()
+## )</code></pre>
+<pre><code>## See spec(...) for full column specifications.</code></pre>
+<pre class="r"><code>poke = GET(&quot;http://pokeapi.co/api/v2/pokemon/1&quot;) %&gt;%
+  content()
+poke$name</code></pre>
+<pre><code>## [1] &quot;bulbasaur&quot;</code></pre>
+<pre class="r"><code>poke$height</code></pre>
+<pre><code>## [1] 7</code></pre>
+<pre class="r"><code>poke$abilities</code></pre>
+<pre><code>## [[1]]
+## [[1]]$ability
+## [[1]]$ability$name
+## [1] &quot;chlorophyll&quot;
+## 
+## [[1]]$ability$url
+## [1] &quot;https://pokeapi.co/api/v2/ability/34/&quot;
+## 
+## 
+## [[1]]$is_hidden
+## [1] TRUE
+## 
+## [[1]]$slot
+## [1] 3
+## 
+## 
+## [[2]]
+## [[2]]$ability
+## [[2]]$ability$name
+## [1] &quot;overgrow&quot;
+## 
+## [[2]]$ability$url
+## [1] &quot;https://pokeapi.co/api/v2/ability/65/&quot;
+## 
+## 
+## [[2]]$is_hidden
+## [1] FALSE
+## 
+## [[2]]$slot
+## [1] 1</code></pre>
+</div>
 
 
 
