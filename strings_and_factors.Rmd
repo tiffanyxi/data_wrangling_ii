@@ -325,3 +325,12 @@ rest_inspec %>%
 
 ```
 
+
+Don't install packages in your Rmd
+Don't call "View" inside a code chunk---error
+Don't use `plyr`
+
+round(1.7) = 2 四舍五入
+as.integer(1.7) = 1 取小的整数
+
+
